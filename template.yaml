@@ -1,0 +1,129 @@
+AWSTemplateFormatVersion : '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AWS re:Post Slack App
+
+Parameters:
+  SlackClientId:
+    Type: String
+    Default: ""
+  SlackClientSecret:
+    Type: String
+    Default: ""
+  SlackSigningSecret:
+    Type: String
+    Default: ""
+
+Globals:
+  Function:
+    Timeout: 480
+    MemorySize: 1024
+    Environment:
+      Variables:
+        SLACK_CLIENT_ID: !Ref SlackClientId
+        SLACK_CLIENT_SECRET: !Ref SlackClientSecret
+        SLACK_SIGNING_SECRET: !Ref SlackSigningSecret
+        OAUTH_STATE_S3_BUCKET_NAME: !Ref OauthStateS3Bucket
+        INSTALLATION_S3_BUCKET_NAME: !Ref InstallationS3Bucket
+        TERRAFROM_STATE_S3_BUCKET_NAME: !Ref TerraformStateS3Bucket
+
+Resources:
+  OauthStateS3Bucket:
+    Type: 'AWS::S3::Bucket' 
+
+  InstallationS3Bucket:
+    Type: 'AWS::S3::Bucket'
+
+  TerraformStateS3Bucket:
+    Type: 'AWS::S3::Bucket'
+
+  SlackAppFunctionRole:
+      Type: AWS::IAM::Role
+      Properties:
+        RoleName: SlackAppFunctionRole
+        AssumeRolePolicyDocument:
+          Version: '2012-10-17'
+          Statement:
+            - Effect: Allow
+              Principal:
+                Service: lambda.amazonaws.com
+              Action: sts:AssumeRole
+        Policies:
+          - PolicyName: AdministratorAccessPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action: "*"
+                  Resource: "*"
+          - PolicyName: SlackAppFunctionPolicy
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - lambda:InvokeFunction
+                    - lambda:InvokeAsync
+                  Resource: "*"
+                - Effect: Allow
+                  Action:
+                    - s3:ListBucket
+                    - s3:GetObject
+                    - s3:GetObjectAcl
+                    - s3:PutObject
+                    - s3:PutObjectAcl
+                    - s3:ReplicateObject
+                    - s3:DeleteObject
+                  Resource: 
+                    - !GetAtt OauthStateS3Bucket.Arn
+                    - !Sub "${OauthStateS3Bucket.Arn}/*"
+                    - !GetAtt InstallationS3Bucket.Arn
+                    - !Sub "${InstallationS3Bucket.Arn}/*"
+                    - !GetAtt TerraformStateS3Bucket.Arn
+                    - !Sub "${TerraformStateS3Bucket.Arn}/*"
+          - PolicyName: AWSLambdaBasicExecutionRole
+            PolicyDocument:
+              Version: '2012-10-17'
+              Statement:
+                - Effect: Allow
+                  Action:
+                    - logs:CreateLogGroup
+                    - logs:CreateLogStream
+                    - logs:PutLogEvents
+                  Resource: "*"
+  
+  SlackAppFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      DockerTag: python3.12
+      DockerContext: ./
+      Dockerfile: Dockerfile
+    Properties:
+      Architectures:
+        - x86_64
+      PackageType: Image
+      Description: Slack App Function
+      Role: !GetAtt SlackAppFunctionRole.Arn
+      Events:
+        SlackEvents:
+          Type: Api
+          Properties:
+            Path: /slack/events
+            Method: POST
+        SlackOauthRedirect:
+          Type: Api
+          Properties:
+            Path: /slack/oauth_redirect
+            Method: GET
+        SlackInstall:
+          Type: Api
+          Properties:
+            Path: /slack/install
+            Method: GET
+
+Outputs:
+  SlackAppFunction:
+    Description: "Slack App Function ARN"
+    Value: !GetAtt SlackAppFunction.Arn
+  SlackAppFunctionRole:
+    Description: "IAM Role for Slack App Function"
+    Value: !GetAtt SlackAppFunctionRole.Arn
