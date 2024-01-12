@@ -21,16 +21,7 @@ app = App(
             client_id = SLACK_CLIENT_ID,
             client_secret = SLACK_CLIENT_SECRET,
             scopes = [
-                'app_mentions:read',
-                'channels:history',
-                'channels:join',
-                'im:read',
-                'im:write',
-                'chat:write',
-                'files:read',
-                'groups:history',
-                'im:history',
-                'mpim:history',
+                'commands'
             ],
         ),
         oauth_state_bucket_name = OAUTH_STATE_S3_BUCKET_NAME,
