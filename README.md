@@ -1,6 +1,6 @@
 # <img src="docs/assets/logo.png" alt="logo" width="18" height="auto"> Terraform-Slack-App (feat. AWS)
 
-<img src="docs/assets/thumb.png" alt="thumb" width="900" height="auto">
+<img src="docs/assets/thumb.png" alt="thumb" width="640" height="auto">
 
 [Terraform](https://www.terraform.io/) Apply/Destroy within Slack using AWS Provider
 
