@@ -24,7 +24,7 @@ def handler(body, respond):
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": f"📁 *{folder}*"
+                            "text": f"📁 {folder}"
                         }
                     }
                 ]

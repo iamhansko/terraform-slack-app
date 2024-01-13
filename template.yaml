@@ -94,7 +94,7 @@ Resources:
   SlackAppFunction:
     Type: AWS::Serverless::Function
     Metadata:
-      DockerTag: python3.12
+      DockerTag: python3.11
       DockerContext: ./
       Dockerfile: Dockerfile
     Properties:
